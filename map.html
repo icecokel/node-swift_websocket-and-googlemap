@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1 id="statusmsg">My First Google Map</h1>
+
+<div id="googleMap" style="width:100%;height:400px;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script>
+var map ;
+var webSocket ;
+
+function myMap() {
+var mapProp= {
+  center:new google.maps.LatLng(37.570688,126.989067),
+  zoom:5,
+};
+
+
+
+map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+var pointArray = [
+    {lat : 37.570688 , lng :126.589067},
+    {lat : 37.570688 , lng :126.689067},
+    {lat : 37.570688 , lng :126.789067}
+]
+var imgArray = [
+    "images/ping.png",
+    "images/ping2.png",
+    "images/ping3.png"
+] 
+
+var contentArray = ["<a href ='www.naver.com'>1</a>","2","3"]
+// 맵이 완료 된 시점 (myMap  렌더가 끝난 상태에서 ) 웹소켓 서버와 연결해 놓자
+connectServer()
+
+}
+
+function connectServer(){
+        webSocket = new WebSocket("ws://192.168.0.173:7979")
+        // 이벤트 처리
+
+        webSocket.onopen = function(){
+            var statusmsg = document.getElementById("statusmsg");
+            statusmsg.innerText = "접속성공";
+
+        }
+        webSocket.onclose = function(){
+            var statusmsg = document.getElementById("statusmsg");
+            statusmsg.innerText = "접속해제";
+            
+        }
+        webSocket.onerror = function(err){
+            var statusmsg = document.getElementById("statusmsg");
+            statusmsg.innerText = "에러발생" + err;
+            
+        }
+
+        webSocket.onmessage = function(e){
+          
+            var statusmsg = document.getElementById("statusmsg");
+            var json = JSON.parse(e.data);
+
+            createIcon([{lat : parseFloat(json.lat) , lng : parseFloat(json.lng)}],["images/ping3.png"],[json.content]);
+           
+        }
+    }
+
+// 마커 추가하기
+function createIcon(pointArray, imgArray , contentArray){
+
+
+    for(var i = 0 ; i < pointArray.length ; i++){
+        var icon = {
+            url:imgArray[i],
+            scaledSize:new google.maps.Size(50,50),
+            origin:new google.maps.Point(0,0),
+            anchor:new google.maps.Point(0,0)
+        }
+        var marker = new google.maps.Marker({
+        position : pointArray[i],
+        animation:google.maps.Animation.BOUNCE,
+        map : map,
+        icon : icon
+        });
+        marker.setMap(map);
+        var infowindow = new google.maps.InfoWindow({
+        content:contentArray[i]
+        });
+
+        infowindow.open(map,marker);
+    }
+    
+}
+
+
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyJ9yFPg4Ii8y--kDj9cf8itmkjk907SI&callback=myMap"></script>
+
+
+</body>
+</html>
